@@ -1,0 +1,51 @@
+# Social Media Dashboard - Client Configuration
+# Add or modify clients here to track their social media presence
+
+clients:
+  - name: "VJFa"
+    slug: "vjfa"
+    platforms:
+      linkedin:
+        company_id: "vjfa"
+      instagram:
+        username: "vjfa"
+      x:
+        username: "vjfa"
+      bluesky:
+        handle: "vjfa.bsky.social"
+    keywords:
+      - "VJFa"
+      - "vjfa"
+      - "#vjfa"
+
+  - name: "Coca-Cola"
+    slug: "coca-cola"
+    platforms:
+      linkedin:
+        company_id: "coca-cola"
+      instagram:
+        username: "cocacola"
+      x:
+        username: "CocaCola"
+      bluesky:
+        handle: "cocacola.bsky.social"
+    keywords:
+      - "Coca-Cola"
+      - "CocaCola"
+      - "#CocaCola"
+
+  - name: "Tesla"
+    slug: "tesla"
+    platforms:
+      linkedin:
+        company_id: "tesla"
+      instagram:
+        username: "teslamotors"
+      x:
+        username: "Tesla"
+      bluesky:
+        handle: "tesla.bsky.social"
+    keywords:
+      - "Tesla"
+      - "#Tesla"
+      - "#ElectricVehicles"
