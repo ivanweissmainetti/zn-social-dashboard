@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZN Consulting — Social Media Intelligence Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+    <style>
+        :root {
+            --primary: #1a1a2e;
+            --secondary: #16213e;
+            --accent: #0f3460;
+            --highlight: #e94560;
+            --success: #53d769;
+            --text: #e0e0e0;
+            --text-muted: #8892a4;
+            --linkedin: #0077B5;
+            --instagram: #E4405F;
+            --x-color: #9BA3AF;
+            --bluesky: #0085FF;
+            --card-bg: #16213e;
+            --border: #253553;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--primary);
+            color: var(--text);
+            min-height: 100vh;
+        }
+        /* HEADER */
+        .header {
+            background: var(--secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .header .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .header .brand .logo {
+            width: 36px; height: 36px;
+            background: var(--highlight);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 16px; color: #fff;
+        }
+        .header .brand h1 {
+            font-size: 18px; font-weight: 600;
+        }
+        .header .brand h1 span { color: var(--text-muted); font-weight: 400; font-size: 14px; }
+        .search-area {
+            display: flex; align-items: center; gap: 8px; flex: 1; max-width: 520px; margin: 0 24px;
+        }
+        .search-area input {
+            flex: 1; padding: 10px 16px; border-radius: 8px; border: 1px solid var(--border);
+            background: var(--primary); color: var(--text); font-size: 14px; font-family: inherit;
+            outline: none; transition: border-color 0.2s;
+        }
+        .search-area input:focus { border-color: var(--highlight); }
+        .search-area input::placeholder { color: var(--text-muted); }
+        .btn {
+            padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer;
+            font-family: inherit; font-size: 13px; font-weight: 500; transition: all 0.2s;
+        }
+        .btn-primary { background: var(--highlight); color: #fff; }
+        .btn-primary:hover { background: #d63a52; }
+        .btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+        .btn-ghost:hover { border-color: var(--text); color: var(--text); }
+        .header-actions { display: flex; gap: 8px; align-items: center; }
+        .status-badge {
+            font-size: 11px; padding: 4px 10px; border-radius: 12px; font-weight: 500;
+        }
+        .status-fresh { background: rgba(83,215,105,0.15); color: var(--success); }
+        .status-stale { background: rgba(233,69,96,0.15); color: var(--highlight); }
+
+        /* MAIN LAYOUT */
+        .main {
+            max-width: 1400px; margin: 0 auto; padding: 24px 32px;
+        }
+        .client-header {
+            margin-bottom: 24px; display: none;
+        }
+        .client-header h2 {
+            font-size: 28px; font-weight: 700;
+        }
+        .client-header p { color: var(--text-muted); margin-top: 4px; }
+
+        /* PLATFORM CARDS */
+        .cards-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 16px; margin-bottom: 24px;
+        }
+        .platform-card {
+            background: var(--card-bg); border-radius: 12px; padding: 20px;
+            border-left: 4px solid var(--border);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .platform-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+        .platform-card.linkedin { border-left-color: var(--linkedin); }
+        .platform-card.instagram { border-left-color: var(--instagram); }
+        .platform-card.x { border-left-color: var(--x-color); }
+        .platform-card.bluesky { border-left-color: var(--bluesky); }
+        .platform-card .card-top {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
+        }
+        .platform-card .card-top .platform-name {
+            display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px;
+        }
+        .platform-card .card-top .platform-icon { font-size: 20px; }
+        .platform-card .card-top .handle { font-size: 12px; color: var(--text-muted); }
+        .platform-card .latest-post {
+            font-size: 13px; color: var(--text-muted); line-height: 1.5;
+            margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical; overflow: hidden;
+        }
+        .platform-card .card-stats {
+            display: flex; gap: 16px; font-size: 12px; color: var(--text-muted);
+        }
+        .platform-card .card-stats .stat { display: flex; align-items: center; gap: 4px; }
+        .platform-card .card-stats .stat-num { color: var(--text); font-weight: 600; }
+        .platform-card .no-data { color: var(--text-muted); font-style: italic; font-size: 13px; }
+
+        /* CHARTS ROW */
+        .charts-row {
+            display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 24px;
+        }
+        .chart-box {
+            background: var(--card-bg); border-radius: 12px; padding: 20px;
+        }
+        .chart-box h3 {
+            font-size: 14px; font-weight: 600; margin-bottom: 16px; color: var(--text);
+        }
+        .chart-container { position: relative; height: 260px; }
+
+        /* BOTTOM LAYOUT */
+        .bottom-row {
+            display: grid; grid-template-columns: 2fr 1fr; gap: 16px;
+        }
+
+        /* FEED */
+        .feed-section {
+            background: var(--card-bg); border-radius: 12px; padding: 20px;
+        }
+        .feed-section h3 {
+            font-size: 14px; font-weight: 600; margin-bottom: 12px;
+        }
+        .feed-filters {
+            display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;
+        }
+        .filter-btn {
+            padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border);
+            background: transparent; color: var(--text-muted); font-size: 12px;
+            cursor: pointer; font-family: inherit; transition: all 0.2s;
+        }
+        .filter-btn.active, .filter-btn:hover {
+            background: var(--accent); color: var(--text); border-color: var(--accent);
+        }
+        .feed-list { max-height: 500px; overflow-y: auto; }
+        .feed-list::-webkit-scrollbar { width: 6px; }
+        .feed-list::-webkit-scrollbar-track { background: transparent; }
+        .feed-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .feed-item {
+            padding: 14px; border-radius: 8px; margin-bottom: 8px;
+            background: rgba(255,255,255,0.02); border: 1px solid transparent;
+            transition: background 0.2s;
+        }
+        .feed-item:hover { background: rgba(255,255,255,0.05); }
+        .feed-item.mention, .feed-item.tag {
+            border-color: rgba(233,69,96,0.3); background: rgba(233,69,96,0.05);
+        }
+        .feed-item .feed-top {
+            display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+        }
+        .feed-item .platform-badge {
+            font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .badge-linkedin { background: rgba(0,119,181,0.2); color: var(--linkedin); }
+        .badge-instagram { background: rgba(228,64,95,0.2); color: var(--instagram); }
+        .badge-x { background: rgba(155,163,175,0.2); color: var(--x-color); }
+        .badge-bluesky { background: rgba(0,133,255,0.2); color: var(--bluesky); }
+        .feed-item .type-badge {
+            font-size: 10px; padding: 2px 8px; border-radius: 10px;
+            background: rgba(233,69,96,0.15); color: var(--highlight); font-weight: 500;
+        }
+        .feed-item .feed-date { font-size: 11px; color: var(--text-muted); margin-left: auto; }
+        .feed-item .feed-content {
+            font-size: 13px; line-height: 1.5; color: var(--text-muted); margin-bottom: 8px;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+        }
+        .feed-item .feed-metrics { display: flex; gap: 14px; font-size: 11px; color: var(--text-muted); }
+        .feed-item .feed-metrics span { display: flex; align-items: center; gap: 3px; }
+
+        /* SIDEBAR */
+        .sidebar-section {
+            display: flex; flex-direction: column; gap: 16px;
+        }
+        .sidebar-box {
+            background: var(--card-bg); border-radius: 12px; padding: 20px;
+        }
+        .sidebar-box h3 {
+            font-size: 14px; font-weight: 600; margin-bottom: 12px;
+        }
+        .mention-item {
+            padding: 10px; border-radius: 8px; margin-bottom: 8px;
+            background: rgba(255,255,255,0.02);
+        }
+        .mention-item .mention-author {
+            font-size: 12px; font-weight: 600; margin-bottom: 4px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .mention-item .mention-text {
+            font-size: 12px; color: var(--text-muted); line-height: 1.4;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+        }
+        .sentiment-dot {
+            width: 8px; height: 8px; border-radius: 50%; display: inline-block;
+        }
+        .sentiment-positive { background: var(--success); }
+        .sentiment-neutral { background: #f0c040; }
+        .sentiment-negative { background: var(--highlight); }
+        .sentiment-row {
+            display: flex; align-items: center; gap: 8px; padding: 6px 0;
+            font-size: 13px; color: var(--text-muted);
+        }
+        .sentiment-row .count { margin-left: auto; font-weight: 600; color: var(--text); }
+        .sentiment-bar {
+            height: 6px; border-radius: 3px; background: var(--primary); margin-top: 12px; overflow: hidden;
+            display: flex;
+        }
+        .sentiment-bar div { height: 100%; transition: width 0.4s; }
+
+        /* EMPTY STATE */
+        .empty-state {
+            text-align: center; padding: 80px 20px;
+        }
+        .empty-state .empty-icon { font-size: 64px; margin-bottom: 16px; }
+        .empty-state h2 { font-size: 24px; margin-bottom: 8px; }
+        .empty-state p { color: var(--text-muted); max-width: 480px; margin: 0 auto 24px; line-height: 1.6; }
+
+        /* RESPONSIVE */
+        @media (max-width: 900px) {
+            .charts-row, .bottom-row { grid-template-columns: 1fr; }
+            .header { padding: 12px 16px; }
+            .main { padding: 16px; }
+            .search-area { max-width: 100%; margin: 0; order: 3; width: 100%; }
+        }
+        @media (max-width: 600px) {
+            .cards-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <header class="header">
+        <div class="brand">
+            <div class="logo">ZN</div>
+            <h1>Social Intelligence <span>by ZN Consulting</span></h1>
+        </div>
+        <div class="search-area">
+            <input type="text" id="searchInput" placeholder="Type a client or organisation name..." />
+            <button class="btn btn-primary" onclick="searchClient()">Search</button>
+        </div>
+        <div class="header-actions">
+            <span class="status-badge" id="statusBadge" style="display:none;"></span>
+            <button class="btn btn-ghost" onclick="loadDemo('vjfa')">Demo: VJFa</button>
+            <button class="btn btn-ghost" onclick="loadDemo('coca-cola')">Demo: Coca-Cola</button>
+        </div>
+    </header>
+
+    <div class="main">
+        <!-- EMPTY STATE (shown by default) -->
+        <div id="emptyState" class="empty-state">
+            <div class="empty-icon">📡</div>
+            <h2>Social Media Intelligence</h2>
+            <p>Search for a client or organisation above to see their social media activity, engagement metrics, mentions, and sentiment across LinkedIn, Instagram, X, and Bluesky.</p>
+            <p style="font-size:13px; color: var(--text-muted);">Or try a demo to see how the dashboard works.</p>
+        </div>
+
+        <!-- DASHBOARD (hidden until data loads) -->
+        <div id="dashboard" style="display:none;">
+            <div class="client-header" id="clientHeader">
+                <h2 id="clientName"></h2>
+                <p id="clientLastUpdated"></p>
+            </div>
+
+            <!-- Platform Cards -->
+            <div class="cards-row" id="platformCards"></div>
+
+            <!-- Charts -->
+            <div class="charts-row">
+                <div class="chart-box">
+                    <h3>Engagement Over Time (30 Days)</h3>
+                    <div class="chart-container"><canvas id="engagementChart"></canvas></div>
+                </div>
+                <div class="chart-box">
+                    <h3>Posts by Platform</h3>
+                    <div class="chart-container"><canvas id="platformChart"></canvas></div>
+                </div>
+            </div>
+
+            <!-- Bottom: Feed + Sidebar -->
+            <div class="bottom-row">
+                <div class="feed-section">
+                    <h3>Activity Feed</h3>
+                    <div class="feed-filters">
+                        <button class="filter-btn active" onclick="filterFeed('all', this)">All</button>
+                        <button class="filter-btn" onclick="filterFeed('post', this)">Posts</button>
+                        <button class="filter-btn" onclick="filterFeed('mention', this)">Mentions</button>
+                        <button class="filter-btn" onclick="filterFeed('tag', this)">Tags</button>
+                    </div>
+                    <div class="feed-list" id="feedList"></div>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-box">
+                        <h3>Sentiment Overview</h3>
+                        <div id="sentimentPanel"></div>
+                    </div>
+                    <div class="sidebar-box">
+                        <h3>What People Are Saying</h3>
+                        <div id="mentionsPanel" style="max-height:360px; overflow-y:auto;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+// ============================================================
+//  STATE
+// ============================================================
+let currentData = null;
+let engagementChartInstance = null;
+let platformChartInstance = null;
+let allFeedItems = [];
+
+// ============================================================
+//  DEMO DATA
+// ============================================================
+const DEMO_DATA = {
+    "vjfa": {
+        client_name: "VJFa",
+        last_updated: new Date().toISOString(),
+        platforms: {
+            linkedin: {
+                handle: "@vjfa",
+                posts: [
+                    { id:"l1", content:"Excited to announce our new partnership with leading sustainability brands across EMEA. This marks a pivotal moment for VJFa's growth strategy.", date:"2026-03-27T14:00:00Z", likes:87, comments:23, reposts:12, type:"post", url:"#" },
+                    { id:"l2", content:"Our Q1 results are in and we're thrilled with the team's performance. Revenue up 18% YoY.", date:"2026-03-24T09:00:00Z", likes:142, comments:31, reposts:28, type:"post", url:"#" },
+                    { id:"l3", content:"VJFa's CEO spoke at the World Economic Forum about the future of circular economy in fashion.", date:"2026-03-20T11:30:00Z", likes:215, comments:45, reposts:67, type:"post", url:"#" }
+                ],
+                mentions: [
+                    { content:"Great session with @VJFa at the sustainability summit. Their approach to circular fashion is truly innovative.", date:"2026-03-26T16:00:00Z", author:"Sarah Mitchell", sentiment:"positive", url:"#" },
+                    { content:"Just signed a deal with VJFa. Looking forward to what's next!", date:"2026-03-23T10:30:00Z", author:"GreenTech Partners", sentiment:"positive", url:"#" }
+                ]
+            },
+            instagram: {
+                handle: "@vjfa_official",
+                posts: [
+                    { id:"i1", content:"Behind the scenes at our latest photoshoot. Sustainable fashion never looked this good. #VJFa #Sustainability", date:"2026-03-26T18:00:00Z", likes:523, comments:67, reposts:0, type:"post", url:"#" },
+                    { id:"i2", content:"Meet the team driving change. Our people are our greatest asset. #TeamVJFa", date:"2026-03-22T12:00:00Z", likes:341, comments:42, reposts:0, type:"post", url:"#" }
+                ],
+                mentions: [
+                    { content:"Loving the new collection from @vjfa_official! So on trend.", date:"2026-03-25T20:00:00Z", author:"@fashionista_uk", sentiment:"positive", url:"#" },
+                    { content:"Tagged by @eco_warriors: VJFa leading the charge on sustainable packaging", date:"2026-03-24T08:00:00Z", author:"@eco_warriors", sentiment:"positive", url:"#" }
+                ]
+            },
+            x: {
+                handle: "@vjfa",
+                posts: [
+                    { id:"x1", content:"Thrilled to be recognised as a top 50 sustainable company in Europe by @ForbesEurope. The journey continues. #VJFa", date:"2026-03-27T10:00:00Z", likes:312, comments:45, reposts:89, type:"post", url:"#" },
+                    { id:"x2", content:"Our new report on circular economy practices is now live. Download it from our website.", date:"2026-03-25T15:00:00Z", likes:156, comments:23, reposts:41, type:"post", url:"#" }
+                ],
+                mentions: [
+                    { content:"Has anyone seen VJFa's new sustainability report? Pretty impressive numbers.", date:"2026-03-27T12:30:00Z", author:"@industry_watch", sentiment:"positive", url:"#" },
+                    { content:"VJFa's shipping times have been slow lately. Anyone else experiencing this?", date:"2026-03-26T14:00:00Z", author:"@customer_jane", sentiment:"negative", url:"#" }
+                ]
+            },
+            bluesky: {
+                handle: "vjfa.bsky.social",
+                posts: [
+                    { id:"b1", content:"We're now on Bluesky! Follow us for updates on sustainable innovation and our mission to reshape the industry.", date:"2026-03-26T09:00:00Z", likes:45, comments:12, reposts:8, type:"post", url:"#" }
+                ],
+                mentions: [
+                    { content:"Welcome to Bluesky @vjfa.bsky.social! Great to see more sustainable brands here.", date:"2026-03-26T10:30:00Z", author:"sustainability.bsky.social", sentiment:"positive", url:"#" }
+                ]
+            }
+        },
+        engagement_timeline: generateTimeline(30)
+    },
+    "coca-cola": {
+        client_name: "Coca-Cola",
+        last_updated: new Date().toISOString(),
+        platforms: {
+            linkedin: {
+                handle: "@the-coca-cola-company",
+                posts: [
+                    { id:"l1", content:"Coca-Cola announces $1B investment in sustainable packaging innovation. Our commitment to a World Without Waste continues.", date:"2026-03-27T08:00:00Z", likes:4521, comments:342, reposts:890, type:"post", url:"#" },
+                    { id:"l2", content:"Proud to be named one of the world's most admired companies by Fortune for the 12th consecutive year.", date:"2026-03-23T14:00:00Z", likes:6234, comments:521, reposts:1245, type:"post", url:"#" }
+                ],
+                mentions: [
+                    { content:"Coca-Cola's new marketing campaign is a masterclass in brand storytelling. Well done.", date:"2026-03-26T11:00:00Z", author:"Marketing Weekly", sentiment:"positive", url:"#" },
+                    { content:"Coca-Cola needs to do more on reducing sugar content. Health experts continue to raise concerns.", date:"2026-03-25T09:30:00Z", author:"Health Watch Daily", sentiment:"negative", url:"#" }
+                ]
+            },
+            instagram: {
+                handle: "@cocacola",
+                posts: [
+                    { id:"i1", content:"Taste the feeling. New limited edition summer collection dropping next week. #CocaCola #Summer2026", date:"2026-03-27T16:00:00Z", likes:45230, comments:3421, reposts:0, type:"post", url:"#" },
+                    { id:"i2", content:"From Atlanta to the world. 140 years of refreshing moments. #CocaCola140", date:"2026-03-21T12:00:00Z", likes:67891, comments:5234, reposts:0, type:"post", url:"#" }
+                ],
+                mentions: [
+                    { content:"This Coca-Cola collab with @artist_name is everything! The cans look incredible.", date:"2026-03-26T22:00:00Z", author:"@design_inspo", sentiment:"positive", url:"#" }
+                ]
+            },
+            x: {
+                handle: "@CocaCola",
+                posts: [
+                    { id:"x1", content:"Nothing beats an ice cold Coke on the first warm day of spring. What's your favourite way to enjoy Coca-Cola?", date:"2026-03-28T10:00:00Z", likes:12453, comments:8923, reposts:2341, type:"post", url:"#" },
+                    { id:"x2", content:"We're proud to be the official beverage partner of the 2026 World Cup. See you there!", date:"2026-03-25T08:00:00Z", likes:34521, comments:4521, reposts:12341, type:"post", url:"#" }
+                ],
+                mentions: [
+                    { content:"Coca-Cola's World Cup ad just dropped and it's giving me chills. Incredible storytelling.", date:"2026-03-26T19:00:00Z", author:"@adweek", sentiment:"positive", url:"#" },
+                    { content:"Why is Coca-Cola still using so much plastic? The sustainability claims don't match reality.", date:"2026-03-25T14:00:00Z", author:"@green_activist", sentiment:"negative", url:"#" },
+                    { content:"Coca-Cola vs Pepsi debate heating up again on my timeline lol", date:"2026-03-24T20:00:00Z", author:"@daily_vibes", sentiment:"neutral", url:"#" }
+                ]
+            },
+            bluesky: {
+                handle: "cocacola.bsky.social",
+                posts: [
+                    { id:"b1", content:"Hello Bluesky! We're here to share our journey towards a more sustainable future. Stay refreshed.", date:"2026-03-20T12:00:00Z", likes:892, comments:123, reposts:234, type:"post", url:"#" }
+                ],
+                mentions: [
+                    { content:"Interesting to see @cocacola.bsky.social on Bluesky. The decentralized social media era is here.", date:"2026-03-21T08:00:00Z", author:"tech.bsky.social", sentiment:"neutral", url:"#" }
+                ]
+            }
+        },
+        engagement_timeline: generateTimeline(30, 5)
+    }
+};
+
+function generateTimeline(days, scale = 1) {
+    const timeline = [];
+    const now = new Date();
+    for (let i = days; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(d.getDate() - i);
+        timeline.push({
+            date: d.toISOString().split('T')[0],
+            linkedin: Math.floor((Math.random() * 50 + 20) * scale),
+            instagram: Math.floor((Math.random() * 80 + 40) * scale),
+            x: Math.floor((Math.random() * 60 + 30) * scale),
+            bluesky: Math.floor((Math.random() * 20 + 5) * scale)
+        });
+    }
+    return timeline;
+}
+
+// ============================================================
+//  SEARCH & LOAD
+// ============================================================
+document.getElementById('searchInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') searchClient();
+});
+
+function searchClient() {
+    const query = document.getElementById('searchInput').value.trim();
+    if (!query) return;
+    const slug = query.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    // Try to load from data folder
+    fetch('data/' + slug + '.json')
+        .then(r => { if (!r.ok) throw new Error('Not found'); return r.json(); })
+        .then(data => renderDashboard(data))
+        .catch(() => {
+            // Check if demo data matches
+            if (DEMO_DATA[slug]) {
+                renderDashboard(DEMO_DATA[slug]);
+            } else {
+                showNoData(query);
+            }
+        });
+}
+
+function loadDemo(slug) {
+    document.getElementById('searchInput').value = DEMO_DATA[slug].client_name;
+    renderDashboard(DEMO_DATA[slug]);
+}
+
+function showNoData(name) {
+    document.getElementById('dashboard').style.display = 'none';
+    const es = document.getElementById('emptyState');
+    es.style.display = 'block';
+    es.innerHTML = `
+        <div class="empty-icon">🔍</div>
+        <h2>No data yet for "${name}"</h2>
+        <p>Data will appear after the next scheduled update. To track this client, add them to your <code>clients.yaml</code> config and the GitHub Action will start collecting data automatically.</p>
+        <p style="font-size:13px; color: var(--text-muted);">Or try a demo to see how the dashboard works.</p>
+    `;
+}
+
+// ============================================================
+//  RENDER
+// ============================================================
+function renderDashboard(data) {
+    currentData = data;
+    document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+
+    // Client header
+    const header = document.getElementById('clientHeader');
+    header.style.display = 'block';
+    document.getElementById('clientName').textContent = data.client_name;
+
+    // Status badge
+    const badge = document.getElementById('statusBadge');
+    const updated = new Date(data.last_updated);
+    const hoursAgo = (Date.now() - updated.getTime()) / (1000 * 60 * 60);
+    badge.style.display = 'inline-block';
+    if (hoursAgo < 24) {
+        badge.className = 'status-badge status-fresh';
+        badge.textContent = 'Data fresh';
+    } else {
+        badge.className = 'status-badge status-stale';
+        badge.textContent = 'Stale — awaiting update';
+    }
+    document.getElementById('clientLastUpdated').textContent = 'Last updated: ' + updated.toLocaleString();
+
+    renderCards(data);
+    renderCharts(data);
+    buildFeedItems(data);
+    renderFeed('all');
+    renderSentiment(data);
+    renderMentions(data);
+}
+
+function renderCards(data) {
+    const platforms = [
+        { key:'linkedin', name:'LinkedIn', icon:'💼', colorVar:'--linkedin' },
+        { key:'instagram', name:'Instagram', icon:'📸', colorVar:'--instagram' },
+        { key:'x', name:'X', icon:'𝕏', colorVar:'--x-color' },
+        { key:'bluesky', name:'Bluesky', icon:'🦋', colorVar:'--bluesky' }
+    ];
+    const container = document.getElementById('platformCards');
+    container.innerHTML = '';
+    platforms.forEach(p => {
+        const pData = data.platforms[p.key];
+        const card = document.createElement('div');
+        card.className = 'platform-card ' + p.key;
+        if (!pData || !pData.posts || pData.posts.length === 0) {
+            card.innerHTML = `
+                <div class="card-top">
+                    <div class="platform-name"><span class="platform-icon">${p.icon}</span> ${p.name}</div>
+                </div>
+                <div class="no-data">No data collected yet</div>
+            `;
+        } else {
+            const latest = pData.posts[0];
+            const totalEng = pData.posts.reduce((a, x) => a + (x.likes||0) + (x.comments||0) + (x.reposts||0), 0);
+            card.innerHTML = `
+                <div class="card-top">
+                    <div class="platform-name"><span class="platform-icon">${p.icon}</span> ${p.name}</div>
+                    <div class="handle">${pData.handle || ''}</div>
+                </div>
+                <div class="latest-post">${escapeHtml(latest.content)}</div>
+                <div class="card-stats">
+                    <div class="stat">❤️ <span class="stat-num">${formatNum(totalEng)}</span> total eng.</div>
+                    <div class="stat">📝 <span class="stat-num">${pData.posts.length}</span> posts</div>
+                    <div class="stat">📅 ${timeAgo(latest.date)}</div>
+                </div>
+            `;
+        }
+        container.appendChild(card);
+    });
+}
+
+function renderCharts(data) {
+    // Engagement line chart
+    if (engagementChartInstance) engagementChartInstance.destroy();
+    const tl = data.engagement_timeline || [];
+    const ctx1 = document.getElementById('engagementChart').getContext('2d');
+    engagementChartInstance = new Chart(ctx1, {
+        type: 'line',
+        data: {
+            labels: tl.map(d => { const dt = new Date(d.date); return dt.toLocaleDateString('en-GB', {day:'numeric', month:'short'}); }),
+            datasets: [
+                { label:'LinkedIn', data: tl.map(d=>d.linkedin), borderColor:'#0077B5', backgroundColor:'rgba(0,119,181,0.1)', fill:true, tension:0.3 },
+                { label:'Instagram', data: tl.map(d=>d.instagram), borderColor:'#E4405F', backgroundColor:'rgba(228,64,95,0.1)', fill:true, tension:0.3 },
+                { label:'X', data: tl.map(d=>d.x), borderColor:'#9BA3AF', backgroundColor:'rgba(155,163,175,0.1)', fill:true, tension:0.3 },
+                { label:'Bluesky', data: tl.map(d=>d.bluesky), borderColor:'#0085FF', backgroundColor:'rgba(0,133,255,0.1)', fill:true, tension:0.3 }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { labels: { color:'#8892a4', font:{size:11} } } },
+            scales: {
+                x: { ticks:{color:'#8892a4',font:{size:10},maxTicksLimit:10}, grid:{color:'rgba(255,255,255,0.05)'} },
+                y: { ticks:{color:'#8892a4',font:{size:10}}, grid:{color:'rgba(255,255,255,0.05)'} }
+            }
+        }
+    });
+
+    // Platform bar chart
+    if (platformChartInstance) platformChartInstance.destroy();
+    const pCounts = ['linkedin','instagram','x','bluesky'].map(k =>
+        (data.platforms[k]?.posts?.length || 0)
+    );
+    const ctx2 = document.getElementById('platformChart').getContext('2d');
+    platformChartInstance = new Chart(ctx2, {
+        type: 'bar',
+        data: {
+            labels: ['LinkedIn','Instagram','X','Bluesky'],
+            datasets: [{
+                label: 'Posts',
+                data: pCounts,
+                backgroundColor: ['#0077B5','#E4405F','#9BA3AF','#0085FF'],
+                borderRadius: 6,
+                barThickness: 40
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { ticks:{color:'#8892a4'}, grid:{display:false} },
+                y: { ticks:{color:'#8892a4',stepSize:1}, grid:{color:'rgba(255,255,255,0.05)'}, beginAtZero:true }
+            }
+        }
+    });
+}
+
+function buildFeedItems(data) {
+    allFeedItems = [];
+    const platformNames = { linkedin:'LinkedIn', instagram:'Instagram', x:'X', bluesky:'Bluesky' };
+    for (const [pKey, pData] of Object.entries(data.platforms)) {
+        if (!pData) continue;
+        (pData.posts || []).forEach(post => {
+            allFeedItems.push({
+                platform: pKey,
+                platformName: platformNames[pKey],
+                type: 'post',
+                content: post.content,
+                date: post.date,
+                likes: post.likes || 0,
+                comments: post.comments || 0,
+                reposts: post.reposts || 0,
+                url: post.url
+            });
+        });
+        (pData.mentions || []).forEach(m => {
+            allFeedItems.push({
+                platform: pKey,
+                platformName: platformNames[pKey],
+                type: m.content.toLowerCase().includes('tagged') || m.content.toLowerCase().includes('tag') ? 'tag' : 'mention',
+                content: m.content,
+                date: m.date,
+                author: m.author,
+                likes: 0, comments: 0, reposts: 0,
+                sentiment: m.sentiment,
+                url: m.url
+            });
+        });
+    }
+    allFeedItems.sort((a, b) => new Date(b.date) - new Date(a.date));
+}
+
+function renderFeed(filter) {
+    const list = document.getElementById('feedList');
+    const items = filter === 'all' ? allFeedItems : allFeedItems.filter(i => i.type === filter);
+    if (items.length === 0) {
+        list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);">No items to show</div>';
+        return;
+    }
+    list.innerHTML = items.map(item => `
+        <div class="feed-item ${item.type}">
+            <div class="feed-top">
+                <span class="platform-badge badge-${item.platform}">${item.platformName}</span>
+                ${item.type !== 'post' ? `<span class="type-badge">${item.type}</span>` : ''}
+                ${item.author ? `<span style="font-size:12px;color:var(--text-muted);">by ${escapeHtml(item.author)}</span>` : ''}
+                <span class="feed-date">${timeAgo(item.date)}</span>
+            </div>
+            <div class="feed-content">${escapeHtml(item.content)}</div>
+            <div class="feed-metrics">
+                <span>❤️ ${formatNum(item.likes)}</span>
+                <span>💬 ${formatNum(item.comments)}</span>
+                <span>🔁 ${formatNum(item.reposts)}</span>
+            </div>
+        </div>
+    `).join('');
+}
+
+function filterFeed(type, btn) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderFeed(type);
+}
+
+function renderSentiment(data) {
+    let pos = 0, neu = 0, neg = 0;
+    for (const pData of Object.values(data.platforms)) {
+        if (!pData?.mentions) continue;
+        pData.mentions.forEach(m => {
+            if (m.sentiment === 'positive') pos++;
+            else if (m.sentiment === 'negative') neg++;
+            else neu++;
+        });
+    }
+    const total = pos + neu + neg || 1;
+    document.getElementById('sentimentPanel').innerHTML = `
+        <div class="sentiment-row">
+            <span class="sentiment-dot sentiment-positive"></span> Positive <span class="count">${pos}</span>
+        </div>
+        <div class="sentiment-row">
+            <span class="sentiment-dot sentiment-neutral"></span> Neutral <span class="count">${neu}</span>
+        </div>
+        <div class="sentiment-row">
+            <span class="sentiment-dot sentiment-negative"></span> Negative <span class="count">${neg}</span>
+        </div>
+        <div class="sentiment-bar">
+            <div style="width:${(pos/total*100)}%;background:var(--success);"></div>
+            <div style="width:${(neu/total*100)}%;background:#f0c040;"></div>
+            <div style="width:${(neg/total*100)}%;background:var(--highlight);"></div>
+        </div>
+    `;
+}
+
+function renderMentions(data) {
+    const mentions = [];
+    for (const [pKey, pData] of Object.entries(data.platforms)) {
+        if (!pData?.mentions) continue;
+        pData.mentions.forEach(m => mentions.push({ ...m, platform: pKey }));
+    }
+    mentions.sort((a, b) => new Date(b.date) - new Date(a.date));
+    const panel = document.getElementById('mentionsPanel');
+    if (mentions.length === 0) {
+        panel.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">No mentions collected yet.</div>';
+        return;
+    }
+    panel.innerHTML = mentions.map(m => `
+        <div class="mention-item">
+            <div class="mention-author">
+                <span class="sentiment-dot sentiment-${m.sentiment || 'neutral'}"></span>
+                ${escapeHtml(m.author || 'Unknown')}
+                <span style="font-size:10px;color:var(--text-muted);margin-left:auto;">${timeAgo(m.date)}</span>
+            </div>
+            <div class="mention-text">${escapeHtml(m.content)}</div>
+        </div>
+    `).join('');
+}
+
+// ============================================================
+//  HELPERS
+// ============================================================
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function formatNum(n) {
+    if (n >= 1000000) return (n/1000000).toFixed(1) + 'M';
+    if (n >= 1000) return (n/1000).toFixed(1) + 'K';
+    return String(n);
+}
+
+function timeAgo(dateStr) {
+    const now = Date.now();
+    const then = new Date(dateStr).getTime();
+    const diff = now - then;
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return mins + 'm ago';
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return hrs + 'h ago';
+    const days = Math.floor(hrs / 24);
+    if (days < 7) return days + 'd ago';
+    return new Date(dateStr).toLocaleDateString('en-GB', { day:'numeric', month:'short' });
+}
+</script>
+</body>
+</html>
